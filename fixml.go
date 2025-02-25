@@ -15,18 +15,10 @@ const (
 	rejectReasonNotConnected       rejectReason = "7"
 )
 
-// Message reject structure
-type fixmlBusinessMessageReject struct {
-	XMLName struct{} `xml:"BizMsgRej"`
-
-	RejectReason rejectReason `xml:"BizRejRsn,attr"`
-	Text         string       `xml:"Txt,attr"`
-}
-
-func (this *fixmlBusinessMessageReject) RejectReasonDescription() string {
-	switch this.RejectReason {
+func (reason rejectReason) desc() string {
+	switch reason {
 	case rejectReasonOther:
-		return fmt.Sprintf("Other error - %s", this.Text)
+		return fmt.Sprintf("Other error")
 	case rejectReasonUnknownId:
 		return "Unknown ID"
 	case rejectReasonUnknownInstrument:
@@ -46,6 +38,14 @@ func (this *fixmlBusinessMessageReject) RejectReasonDescription() string {
 	return "Unknown error"
 }
 
+// Message reject structure
+type fixmlBusinessMessageReject struct {
+	XMLName struct{} `xml:"BizMsgRej"`
+
+	RejectReason rejectReason `xml:"BizRejRsn,attr"`
+	Text         string       `xml:"Txt,attr"`
+}
+
 // Main FIXML message structure
 const (
 	fixmlDefaultVersion = "5.0"
@@ -53,7 +53,7 @@ const (
 	fixmlSchemaDate     = "20080314"
 )
 
-type fixmlMessage[T any] struct {
+type fixmlRequest[T any] struct {
 	XMLName struct{} `xml:"FIXML"`
 
 	Version      string `xml:"v,attr"`
@@ -64,15 +64,25 @@ type fixmlMessage[T any] struct {
 	RejectMessage *fixmlBusinessMessageReject `xml:",omitemtpy"`
 }
 
-func wrapFixmlMessage[T any](v T) fixmlMessage[T] {
-	return fixmlMessage[T]{
+func wrapFixmlRequest[T any](v T) fixmlRequest[T] {
+	return fixmlRequest[T]{
 		Version:      fixmlDefaultVersion,
 		RevisionDate: fixmlRevisionDate,
 		SchemaDate:   fixmlSchemaDate,
 
-		Message:       &v,
-		RejectMessage: nil,
+		Message: &v,
 	}
+}
+
+type fixmlResponse struct {
+	XMLName struct{} `xml:"FIXML"`
+
+	Version      string `xml:"v,attr"`
+	RevisionDate string `xml:"r,attr"`
+	SchemaDate   string `xml:"s,attr"`
+
+	RejectMessage *fixmlBusinessMessageReject `xml:",omitemtpy"`
+	UserResponse  *fixmlUserResponse
 }
 
 // User request / response
@@ -134,3 +144,5 @@ type fixmlUserResponse struct {
 	MarketDepth int        `xml:"MktDepth,attr"`
 	UserStatus  userStatus `xml:"UserStat,attr"`
 }
+
+//

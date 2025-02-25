@@ -13,7 +13,7 @@ func TestFixmlMarshalling(t *testing.T) {
 		Password:  "BOS",
 	}
 
-	msg := wrapFixmlMessage(userReq)
+	msg := wrapFixmlRequest(userReq)
 
 	expectedContent := `<FIXML v="5.0" r="20080317" s="20080314"><UserReq UserReqID="1" UserReqTyp="1" Username="BOS" Password="BOS"></UserReq></FIXML>`
 	content, err := xml.Marshal(msg)
@@ -28,22 +28,26 @@ func TestFixmlMarshalling(t *testing.T) {
 }
 
 func TestFixmlUnmarshalling(t *testing.T) {
-	content := `<FIXML v="5.0" r="20080317" s="20080314"><UserReq UserReqID="1" UserReqTyp="1" Username="BOS" Password="BOS"></UserReq></FIXML>`
-	dst := fixmlMessage[fixmlUserRequest]{}
+	content := `<FIXML v="5.0" r="20080317" s="20080314"><UserRsp UserReqID="0" Username="BOS" MktDepth="5" UserStat="1"/></FIXML>`
+	dst := fixmlResponse{}
 
 	err := xml.Unmarshal([]byte(content), &dst)
 	if err != nil {
 		t.Fatalf("Error while unmarshalling: %v", err)
 	}
 
-	if dst.Message.Type != userReqTypeLogin {
-		t.Fatalf("Unexpected request type: %d", dst.Message.Type)
+	if dst.UserResponse == nil {
+		t.Fatalf("User response missing after unmarshalling")
+	}
+
+	if dst.UserResponse.UserStatus != userStatusLoggedIn {
+		t.Fatalf("Unexpected user status: %d", dst.UserResponse.UserStatus)
 	}
 }
 
 func TestFixmlUnmarshallingToRejectMessage(t *testing.T) {
 	content := `<FIXML v="5.0" r="20080317" s="20080314"><BizMsgRej RefMsgTyp="BE" BizRejRsn="5"/></FIXML>`
-	dst := fixmlMessage[fixmlUserRequest]{}
+	dst := fixmlRequest[fixmlUserRequest]{}
 
 	err := xml.Unmarshal([]byte(content), &dst)
 	if err != nil {

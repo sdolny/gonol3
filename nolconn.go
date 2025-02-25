@@ -44,26 +44,26 @@ func (this *NolConn) Close() {
 }
 
 func (this *NolConn) Login(username, password string) error {
-	request := wrapFixmlMessage(fixmlUserRequest{
+	request := wrapFixmlRequest(fixmlUserRequest{
 		RequestId: 1,
 		Username:  username,
 		Password:  password,
 		Type:      userReqTypeLogin,
 	})
 
-	response := fixmlMessage[fixmlUserResponse]{}
+	response := fixmlResponse{}
 	err := exchangeFixmlMessages(this, request, &response)
 	if err != nil {
 		return err
 	}
 
 	if response.RejectMessage != nil {
-		rejectReasonDesc := response.RejectMessage.RejectReasonDescription()
+		rejectReasonDesc := response.RejectMessage.RejectReason.desc()
 		return fmt.Errorf("fixml request rejected with an error: %s", rejectReasonDesc)
 	}
 
-	if response.Message.UserStatus != userStatusLoggedIn {
-		userStatusDesc := response.Message.UserStatus.desc()
+	if response.UserResponse.UserStatus != userStatusLoggedIn {
+		userStatusDesc := response.UserResponse.UserStatus.desc()
 		return fmt.Errorf("User cannot be logged in. Error code: %s", userStatusDesc)
 	}
 
@@ -71,26 +71,26 @@ func (this *NolConn) Login(username, password string) error {
 }
 
 func (this *NolConn) Logout(username, password string) error {
-	request := wrapFixmlMessage(fixmlUserRequest{
+	request := wrapFixmlRequest(fixmlUserRequest{
 		RequestId: 1,
 		Username:  username,
 		Password:  password,
 		Type:      userReqTypeLogout,
 	})
 
-	response := fixmlMessage[fixmlUserResponse]{}
+	response := fixmlResponse{}
 	err := exchangeFixmlMessages(this, request, &response)
 	if err != nil {
 		return err
 	}
 
 	if response.RejectMessage != nil {
-		rejectReasonDesc := response.RejectMessage.RejectReasonDescription()
+		rejectReasonDesc := response.RejectMessage.RejectReason.desc()
 		return fmt.Errorf("FIXML request rejected with an error: %s", rejectReasonDesc)
 	}
 
-	if response.Message.UserStatus != userStatusLoggedOut {
-		userStatusDesc := response.Message.UserStatus.desc()
+	if response.UserResponse.UserStatus != userStatusLoggedOut {
+		userStatusDesc := response.UserResponse.UserStatus.desc()
 		return fmt.Errorf("User cannot be logged in. Error code: %s", userStatusDesc)
 	}
 
